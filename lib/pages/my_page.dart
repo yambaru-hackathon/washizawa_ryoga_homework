@@ -14,8 +14,14 @@ class MyPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('マイページ'),
+        title: const Text(
+          'Instagram',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 16,
+          ),
         ),
+      ),
       body: Padding(
         padding: const EdgeInsets.all(8.0),
         child: Column(
