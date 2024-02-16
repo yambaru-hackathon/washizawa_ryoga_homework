@@ -1,10 +1,16 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_core/firebase_core.dart';
 
-import './page/next_page.dart';
+import './firebase_options.dart';
+import './user.dart';
+import './page/add_page.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   runApp(const MyApp());
 }
 
@@ -14,12 +20,12 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'Firebase-CRUD App',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: const MyHomePage(title: 'タイマー'),
+      home: const MyHomePage(title: 'Firebase-CRUD App'),
     );
   }
 }
@@ -34,15 +40,23 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  int _minute = 0;
-  int _second = 0;
-  int _millisecond = 0;
-  Timer? _timer;
-  bool _isRunning = false;
+  List<User> users = [];
 
   @override
   void initState() {
     super.initState();
+    _fetcFirebaseData();
+  }
+
+  void _fetcFirebaseData() async {
+    final db = FirebaseFirestore.instance;
+    final event = await db.collection("users").get();
+    final docs = event.docs;
+    final users = docs.map((doc) => User.fromFirestore(doc)).toList();
+
+    setState(() {
+      this.users = users;
+    });
   }
 
   @override
@@ -52,92 +66,89 @@ class _MyHomePageState extends State<MyHomePage> {
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: Text(widget.title),
       ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            SizedBox(
-              width: 200,
-              height: 100,
-              child: Align(
-                alignment: Alignment.center,
-                child: Text(
-                  '$_minute:$_second:${_millisecond.toString().padLeft(2, '0')}',
-                  style: const TextStyle(fontSize: 64),
-                ),
-              ),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                toggleTimer();
-              },
-              child: Text(
-                _isRunning ? 'ストップ' : 'スタート',
-                style: TextStyle(
-                  color: _isRunning ? Colors.red : Colors.green,
-                ),
-              ),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                resetTimer();
-              },
-              child: const Text(
-                'リセット',
-                style: TextStyle(
-                  color: Colors.black,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ],
-        ),
+      body: ListView(
+        children: users
+            .map((user) => ListTile(
+                  title: Text(user.first),
+                  subtitle: Text(user.last),
+                  trailing: Text(user.born.toString()),
+                  onTap: () {
+                    showDialog(
+                      context: context,
+                      builder: (BuildContext context) {
+                        return AlertDialog(
+                          title: const Text("Select Year"),
+                          content: SizedBox(
+                            width: 300,
+                            height: 300,
+                            child: YearPicker(
+                              firstDate: DateTime(DateTime.now().year - 100, 1),
+                              lastDate: DateTime(DateTime.now().year + 100, 1),
+                              // ignore: deprecated_member_use
+                              initialDate: DateTime.now(),
+                              selectedDate: DateTime(int.parse(user.born)),
+                              onChanged: (DateTime dateTime) {
+                                FirebaseFirestore.instance
+                                    .collection('users')
+                                    .doc(user.id)
+                                    .update({'born': dateTime.year});
+                                Navigator.pop(context);
+
+                                _fetcFirebaseData();
+                              },
+                            ),
+                          ),
+                        );
+                      },
+                    );
+                  },
+                  onLongPress: () async {
+                    showDialog(
+                      context: context,
+                      builder: (context) {
+                        return AlertDialog(
+                          title: const Text("削除"),
+                          content: const Text("このリストデータを削除しますか？"),
+                          actions: [
+                            TextButton(
+                              child: const Text("Cancel"),
+                              onPressed: () => Navigator.pop(context),
+                            ),
+                            TextButton(
+                              child: const Text("OK"),
+                              onPressed: () async {
+                                final db = FirebaseFirestore.instance;
+                                await db
+                                    .collection("users")
+                                    .doc(user.id)
+                                    .delete();
+                                _fetcFirebaseData();
+                                // ignore: use_build_context_synchronously
+                                Navigator.pop(context);
+                              },
+                            ),
+                          ],
+                        );
+                      },
+                    );
+                    _fetcFirebaseData();
+                  },
+                ))
+            .toList(),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _goToAddPage,
+        tooltip: 'Increment',
+        child: const Icon(Icons.add),
       ),
     );
   }
 
-  void toggleTimer() {
-    if (_isRunning) {
-      _timer?.cancel();
-    } else {
-      _timer = Timer.periodic(
-        const Duration(microseconds: 1000),
-        (timer) {
-          setState(() {
-            _millisecond++;
-            if (_millisecond >= 1000) {
-              _millisecond = 0;
-              _second++;
-              if (_second >= 60) {
-                _second = 0;
-                _minute++;
-              }
-            }
-          });
-
-          if (_minute == 1 && _second == 0 && _millisecond == 0) {
-            resetTimer();
-
-            Navigator.push(
-              context, MaterialPageRoute(builder: (context) => const NextPage()),
-            );
-          }
-        },
-      );
-    }
-    setState(() {
-      _isRunning = !_isRunning;
-    });
-  }
-
-  void resetTimer() {
-    _timer?.cancel();
-
-    setState(() {
-      _minute = 0;
-      _second = 0;
-      _millisecond = 0;
-      _isRunning = false;
-    });
+  void _goToAddPage() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => AddPage()),
+    );
+    _fetcFirebaseData();
   }
 }
