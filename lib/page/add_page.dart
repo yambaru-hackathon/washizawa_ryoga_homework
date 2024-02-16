@@ -20,7 +20,7 @@ class AddPage extends StatelessWidget {
           children: [
             TextField(
             decoration: const InputDecoration(
-              hintText: 'First Nmae',
+              hintText: 'First',
             ),
             onChanged: (text) {
                 first = text;
@@ -28,7 +28,7 @@ class AddPage extends StatelessWidget {
             ),
             TextField(
             decoration: const InputDecoration(
-              hintText: 'Last Nmae',
+              hintText: 'Last',
             ),
             onChanged: (text) {
                 last = text;
@@ -36,7 +36,7 @@ class AddPage extends StatelessWidget {
             ),
             TextField(
               decoration: const InputDecoration(
-                hintText: 'age',
+                hintText: 'year',
               ),
               keyboardType: TextInputType.number,
               onChanged: (text) {
