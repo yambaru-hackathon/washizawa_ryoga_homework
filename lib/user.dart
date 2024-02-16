@@ -4,13 +4,13 @@ class User {
   final String id;
   final String first;
   final String last;
-  final String born;
+  final String year;
 
   User(
       {required this.id,
       required this.first,
       required this.last,
-      required this.born});
+      required this.year});
 
   factory User.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
@@ -18,7 +18,7 @@ class User {
       id: doc.id,
       first: data['first'],
       last: data['last'],
-      born: data['born'].toString(),
+      year: data['year'].toString(),
     );
   }
 }

@@ -71,7 +71,7 @@ class _MyHomePageState extends State<MyHomePage> {
             .map((user) => ListTile(
                   title: Text(user.first),
                   subtitle: Text(user.last),
-                  trailing: Text(user.born.toString()),
+                  trailing: Text(user.year.toString()),
                   onTap: () {
                     showDialog(
                       context: context,
@@ -86,12 +86,12 @@ class _MyHomePageState extends State<MyHomePage> {
                               lastDate: DateTime(DateTime.now().year + 100, 1),
                               // ignore: deprecated_member_use
                               initialDate: DateTime.now(),
-                              selectedDate: DateTime(int.parse(user.born)),
+                              selectedDate: DateTime(int.parse(user.year)),
                               onChanged: (DateTime dateTime) {
                                 FirebaseFirestore.instance
                                     .collection('users')
                                     .doc(user.id)
-                                    .update({'born': dateTime.year});
+                                    .update({'year': dateTime.year});
                                 Navigator.pop(context);
 
                                 _fetcFirebaseData();

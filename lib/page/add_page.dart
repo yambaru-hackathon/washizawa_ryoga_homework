@@ -62,7 +62,7 @@ class AddPage extends StatelessWidget {
     final user = <String, dynamic>{
       "first": first,
       "last": last,
-      "born": year
+      "year": year
     };
 
   await db.collection("users").add(user);
