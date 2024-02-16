@@ -103,34 +103,8 @@ class _MyHomePageState extends State<MyHomePage> {
                     );
                   },
                   onLongPress: () async {
-                    showDialog(
-                      context: context,
-                      builder: (context) {
-                        return AlertDialog(
-                          title: const Text("削除"),
-                          content: const Text("このリストデータを削除しますか？"),
-                          actions: [
-                            TextButton(
-                              child: const Text("Cancel"),
-                              onPressed: () => Navigator.pop(context),
-                            ),
-                            TextButton(
-                              child: const Text("OK"),
-                              onPressed: () async {
-                                final db = FirebaseFirestore.instance;
-                                await db
-                                    .collection("users")
-                                    .doc(user.id)
-                                    .delete();
-                                _fetcFirebaseData();
-                                // ignore: use_build_context_synchronously
-                                Navigator.pop(context);
-                              },
-                            ),
-                          ],
-                        );
-                      },
-                    );
+                    final db = FirebaseFirestore.instance;
+                    await db.collection("users").doc(user.id).delete();
                     _fetcFirebaseData();
                   },
                 ))
